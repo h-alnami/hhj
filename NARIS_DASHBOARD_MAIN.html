@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CALL OF NARIS - Control Center</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #080808;
+        color: #eee;
+        margin: 0;
+        padding: 20px;
+    }
+    h1 {
+        color: #00e5ff;
+        text-align: center;
+        border-bottom: 2px solid #00e5ff;
+        padding-bottom: 20px;
+    }
+    h2 {
+        color: #ffaa00;
+        border-bottom: 1px solid #555;
+        padding-bottom: 8px;
+        margin-top: 40px;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .card {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 20px;
+        transition: 0.3s;
+    }
+    .card:hover {
+        border-color: #00e5ff;
+        box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+        transform: translateY(-5px);
+    }
+    .card h3 { margin-top: 0; color: #ddd; }
+    .btn {
+        display: inline-block;
+        background: #00e5ff;
+        color: #000;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+    .btn:hover { background: #fff; }
+    .btn.secondary { background: #ffaa00; }
+    .btn.tertiary { background: #7b2d8e; color: #fff; }
+    .btn.disabled {
+        background: #333;
+        color: #777;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    .small { font-size: 12px; color: #888; }
+    .badge-soon {
+        display: inline-block;
+        font-size: 10px;
+        background: #333;
+        color: #999;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-inline-start: 6px;
+    }
+</style>
+</head>
+<body>
+
+<h1>⚙️ CALL OF NARIS - الإنتاج والإدارة المركزية</h1>
+<p style="text-align:center;">اجمع، حسن، وأطلق عالمك من مكان واحد</p>
+
+<h2>🕹️ أدوات التشغيل التفاعلية</h2>
+<div class="grid">
+    <div class="card">
+        <h3>👁️ عارض النماذج (3D Viewer)</h3>
+        <p class="small">اعرض أي نموذج GLB/GLTF/OBJ/STL/FBX أو صورة من جهازك عبر السحب والإفلات</p>
+        <a href="3d-viewer.html" class="btn">فتح العارض</a>
+    </div>
+
+    <div class="card">
+        <h3>🌲 بيئة اللعب (Ashen Forest)</h3>
+        <p class="small">تجول في الغابة، اجمع الرونات، وحمّل شخصيتك (GLB)</p>
+        <a href="naris-ashen-forest-game.html" class="btn">دخول اللعبة</a>
+    </div>
+
+    <div class="card">
+        <h3>🖼️ محول الصور إلى 3D</h3>
+        <p class="small">حول أي صورة إلى نموذج ثلاثي الأبعاد (OBJ) مع تحكم كامل</p>
+        <a href="image-to-3d.html" class="btn">فتح المحول</a>
+    </div>
+</div>
+
+<h2>📊 مستندات الإنتاج</h2>
+<div class="grid">
+    <div class="card">
+        <h3>📖 دليل المشروع</h3>
+        <p class="small">شرح شامل لهيكل المشروع وكيفية الاستخدام</p>
+        <a href="PROJECT_GUIDE.md" class="btn secondary">فتح الدليل</a>
+    </div>
+
+    <div class="card">
+        <h3>📦 جرد الأصول</h3>
+        <p class="small">قائمة كاملة بجميع النماذج، الأحجام، والصيغ</p>
+        <a href="ASSETS_INVENTORY.md" class="btn secondary">فتح الجرد</a>
+    </div>
+
+    <div class="card">
+        <h3>🚀 الميزات المتقدمة</h3>
+        <p class="small">دمج محركات الألعاب، AR، Ray Tracing، والتحسينات</p>
+        <a href="ADVANCED_FEATURES.md" class="btn tertiary">عرض الدليل</a>
+    </div>
+
+    <div class="card">
+        <h3>🔐 الأمان والتحسين</h3>
+        <p class="small">حماية النماذج، ضغط الملفات، ومعايير الأداء</p>
+        <a href="SECURITY_AND_OPTIMIZATION.md" class="btn tertiary">عرض الدليل</a>
+    </div>
+</div>
+
+<h2>🎨 أدوات بلندر (NARIS Toolkit)</h2>
+<div class="grid">
+    <div class="card">
+        <h3>🦴 مولّد وحش العظام (Bone Beast)</h3>
+        <p class="small">سكربت بايثون جاهز — افتحه في تبويب Scripting داخل بلندر وشغّله (Alt+P)</p>
+        <a href="naris_bone_beast_builder.py" class="btn" download>تحميل السكربت</a>
+    </div>
+
+    <div class="card">
+        <h3>🛠️ أداة تجميع المشهد</h3>
+        <p class="small">سكربت تجميع المشهد الكامل من بلندر</p>
+        <span class="btn disabled">قريباً <span class="badge-soon">SOON</span></span>
+    </div>
+</div>
+
+<h2>📱 مشاريع أخرى / Other Projects</h2>
+<div class="grid">
+    <div class="card">
+        <h3>📲 RakanAPI - Flutter App</h3>
+        <p class="small">تطبيق موبايل iOS/Android مع بناء تلقائي عبر GitHub Actions</p>
+        <span class="btn disabled">راجع مجلد RakanAPI المستقل</span>
+    </div>
+</div>
+
+<p style="text-align:center; margin-top:50px; color:#555; font-size:12px;">
+    CALL OF NARIS — Control Center • آخر تحديث: 2026-08-28
+</p>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+{
+  "name": "nar-pic-3d-assets",
+  "version": "1.0.0",
+  "description": "مجموعة شاملة من النماذج ثلاثية الأبعاد - Comprehensive 3D Model Assets Collection",
+  "main": "3d-viewer.html",
+  "scripts": {
+    "start": "http-server -p 8000 -c-1",
+    "dev": "http-server -p 3000 -c-1",
+    "serve": "python -m http.server 8000",
+    "build": "echo 'Build script - customize as needed'",
+    "test": "echo 'Test script - add your tests here'",
+    "docs": "echo 'Documentation generated'"
+  },
+  "keywords": [
+    "3d",
+    "models",
+    "glb",
+    "gltf",
+    "viewer",
+    "three.js",
+    "babylon.js",
+    "nar-pic",
+    "3d-assets",
+    "characters",
+    "environment"
+  ],
+  "author": "Hashim Al-Nami",
+  "email": "hashimalnami1556@gmail.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hashimalnami1556-sketch/hhj.git"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "three": "latest",
+    "babylonjs": "^6.16.0",
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
+  "projectMetadata": {
+    "title": "Nar Pic 3D Assets",
+    "description": "مشروع مجموعة نماذج ثلاثية الأبعاد احترافية",
+    "startDate": "2026-08-25",
+    "status": "active",
+    "team": ["Hashim Al-Nami"],
+    "totalAssets": 10,
+    "totalSize": "19.35 MB",
+    "models": {
+      "characters": 4,
+      "environments": 2,
+      "other": 4
+    },
+    "fileFormats": ["GLB", "USDZ", "STL", "ZIP", "MP4"],
+    "targetPlatforms": ["Web", "Mobile", "Desktop", "3D Printing"],
+    "technologies": ["Three.js", "Babylon.js", "WebGL", "Blender"],
+    "futureGoals": [
+      "Advanced 3D Viewer",
+      "AR Application",
+      "Mobile Game",
+      "3D Simulation"
+    ]
+  }
+}

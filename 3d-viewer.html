@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عارض النماذج ثلاثية الأبعاد - 3D Model Viewer</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A8%3C/text%3E%3C/svg%3E">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 16px 20px;
+            text-align: center;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .viewer {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            min-height: 600px;
+        }
+
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #imagePreview {
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+        }
+
+        #imagePreview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .drop-hint {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: rgba(102, 126, 234, 0.15);
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            z-index: 20;
+            pointer-events: none;
+            color: #667eea;
+            font-size: 1.4em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .drop-hint.active {
+            display: flex;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            display: none;
+            z-index: 30;
+            text-align: center;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .empty-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #999;
+            gap: 10px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .empty-state.hidden {
+            display: none;
+        }
+
+        .empty-state .icon {
+            font-size: 4em;
+        }
+
+        .sidebar {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f5f6ff;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            background: #e8e8ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area .icon {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            font-size: 0.85em;
+            color: #555;
+            margin: 4px 0;
+        }
+
+        .upload-area small {
+            color: #999;
+            font-size: 0.75em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .format-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .badge {
+            background: #667eea;
+            color: white;
+            font-size: 0.7em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .model-list {
+            list-style: none;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .model-item {
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-item:hover {
+            background: #e8e8ff;
+            border-left-color: #667eea;
+            transform: translateX(-3px);
+        }
+
+        .model-item.active {
+            background: #667eea;
+            color: white;
+            border-left-color: #764ba2;
+        }
+
+        .model-item .remove-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: 0.6;
+            cursor: pointer;
+            font-size: 1em;
+            width: auto;
+            padding: 2px 6px;
+            margin: 0;
+        }
+
+        .model-item .remove-btn:hover {
+            opacity: 1;
+            background: rgba(255,0,0,0.2);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.85em;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        button {
+            width: 100%;
+            padding: 9px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-bottom: 6px;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .info-panel {
+            background: #f9f9f9;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 0.8em;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .info-panel strong {
+            color: #667eea;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                order: 2;
+            }
+
+            .viewer {
+                order: 1;
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 عارض النماذج ثلاثية الأبعاد والصور</h1>
+        <p>3D Model & Image Viewer - ارفع أي صيغة نموذج أو صورة</p>
+    </div>
+
+    <div class="container">
+        <div class="viewer" id="viewerDropZone">
+            <canvas id="canvas3d"></canvas>
+            <div id="imagePreview"><img id="previewImg" alt="Preview"></div>
+            <div class="empty-state" id="emptyState">
+                <div class="icon">📁</div>
+                <p>اسحب وأفلت ملف هنا أو استخدم زر الرفع</p>
+                <p style="font-size:0.8em">Drag & drop a file, or use the upload button</p>
+            </div>
+            <div class="drop-hint" id="dropHint">📥 أفلت الملف هنا للرفع<br>Drop file to upload</div>
+            <div class="loading" id="loading">⏳ جاري التحميل...<br><span id="loadingDetail"></span></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="panel">
+                <h2>⬆️ رفع ملف / Upload File</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="icon">📤</div>
+                    <p><strong>اضغط للرفع</strong> أو اسحب الملف هنا</p>
+                    <small>Click to upload or drag & drop</small>
+                    <div class="format-badges">
+                        <span class="badge">GLB</span>
+                        <span class="badge">GLTF</span>
+                        <span class="badge">OBJ</span>
+                        <span class="badge">STL</span>
+                        <span class="badge">FBX</span>
+                        <span class="badge">PNG</span>
+                        <span class="badge">JPG</span>
+                        <span class="badge">WEBP</span>
+                        <span class="badge">SVG</span>
+                        <span class="badge">GIF</span>
+                    </div>
+                </div>
+                <input type="file" id="fileInput" multiple
+                    accept=".glb,.gltf,.obj,.stl,.fbx,.png,.jpg,.jpeg,.webp,.gif,.svg,.bmp,image/*">
+            </div>
+
+            <div class="panel">
+                <h2>📦 الملفات / Files</h2>
+                <ul class="model-list" id="modelList"></ul>
+            </div>
+
+            <div class="panel" id="controlsPanel" style="display:none">
+                <h2>⚙️ التحكم / Controls</h2>
+                <div class="control-group">
+                    <label for="scale">حجم النموذج / Scale</label>
+                    <input type="range" id="scale" min="0.1" max="5" step="0.1" value="1">
+                </div>
+
+                <div class="control-group">
+                    <label for="rotationSpeed">سرعة الدوران / Rotation Speed</label>
+                    <input type="range" id="rotationSpeed" min="0" max="10" step="0.5" value="2">
+                </div>
+
+                <button id="resetView">🔄 إعادة تعيين العرض</button>
+                <button id="toggleRotation">⏸️ إيقاف الدوران</button>
+                <button id="toggleBackground">🎨 تغيير الخلفية</button>
+                <button id="toggleWireframe">🔲 عرض الإطار الشبكي</button>
+            </div>
+
+            <div class="panel">
+                <div class="info-panel">
+                    <strong>معلومات الملف:</strong><br>
+                    <span id="modelInfo">لم يتم اختيار أي ملف بعد</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js core + loaders (CDN) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+        const canvas = document.getElementById('canvas3d');
+        const viewerEl = document.getElementById('viewerDropZone');
+        const emptyState = document.getElementById('emptyState');
+        const dropHint = document.getElementById('dropHint');
+        const loading = document.getElementById('loading');
+        const loadingDetail = document.getElementById('loadingDetail');
+        const modelList = document.getElementById('modelList');
+        const modelInfo = document.getElementById('modelInfo');
+        const controlsPanel = document.getElementById('controlsPanel');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+
+        // ---------- Three.js Scene Setup ----------
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+
+        const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 5000);
+        camera.position.set(3, 3, 5);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 7.5);
+        scene.add(dirLight);
+        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+        dirLight2.position.set(-5, -5, -5);
+        scene.add(dirLight2);
+
+        const grid = new THREE.GridHelper(10, 10, 0xcccccc, 0xeeeeee);
+        scene.add(grid);
+
+        function resizeRenderer() {
+            const w = viewerEl.clientWidth;
+            const h = viewerEl.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h, false);
+        }
+        resizeRenderer();
+        window.addEventListener('resize', resizeRenderer);
+
+        let currentObject = null;
+        let isRotating = true;
+        let rotationSpeed = 2;
+        let bgIndex = 0;
+        const backgrounds = [0xffffff, 0x1a1a2e, 0x0f3460];
+        let wireframeOn = false;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentObject && isRotating) {
+                currentObject.rotation.y += 0.005 * rotationSpeed;
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function clearCurrentObject() {
+            if (currentObject) {
+                scene.remove(currentObject);
+                currentObject.traverse?.(obj => {
+                    if (obj.geometry) obj.geometry.dispose();
+                    if (obj.material) {
+                        (Array.isArray(obj.material) ? obj.material : [obj.material])
+                            .forEach(m => m.dispose());
+                    }
+                });
+                currentObject = null;
+            }
+        }
+
+        function frameObject(object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            const scaleFactor = 2 / maxDim;
+            object.scale.setScalar(scaleFactor);
+
+            // Recompute after scaling
+            const box2 = new THREE.Box3().setFromObject(object);
+            const center2 = box2.getCenter(new THREE.Vector3());
+            object.position.sub(center2);
+
+            camera.position.set(3, 2, 4);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        function applyWireframe(object, on) {
+            object.traverse?.(obj => {
+                if (obj.material) {
+                    (Array.isArray(obj.material) ? obj.material : [obj.material])
+                        .forEach(m => m.wireframe = on);
+                }
+            });
+        }
+
+        // ---------- File Registry ----------
+        // items: { id, name, size, type: '3d'|'image', format, url/objectURL, object3d? }
+        let items = [];
+        let itemCounter = 0;
+
+        function humanFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            const units = ['KB', 'MB', 'GB'];
+            let i = -1;
+            do { bytes /= 1024; i++; } while (bytes >= 1024 && i < units.length - 1);
+            return bytes.toFixed(2) + ' ' + units[i];
+        }
+
+        function getExt(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+
+        const MODEL_EXTS = ['glb', 'gltf', 'obj', 'stl', 'fbx'];
+        const IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp'];
+
+        function renderModelList() {
+            modelList.innerHTML = '';
+            if (items.length === 0) {
+                modelList.innerHTML = '<li style="color:#999;font-size:0.85em;padding:8px">لا توجد ملفات مرفوعة بعد</li>';
+                return;
+            }
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'model-item';
+                li.dataset.id = item.id;
+                const icon = item.type === '3d' ? '🧊' : '🖼️';
+                li.innerHTML = `<span>${icon} ${item.name}<br><small>${item.format.toUpperCase()} • ${humanFileSize(item.size)}</small></span>
+                    <button class="remove-btn" title="حذف">✖</button>`;
+                li.addEventListener('click', (e) => {
+                    if (e.target.closest('.remove-btn')) return;
+                    selectItem(item.id);
+                });
+                li.querySelector('.remove-btn').addEventListener('click', () => removeItem(item.id));
+                modelList.appendChild(li);
+            });
+        }
+
+        function removeItem(id) {
+            const idx = items.findIndex(i => i.id === id);
+            if (idx === -1) return;
+            const item = items[idx];
+            if (item.objectURL) URL.revokeObjectURL(item.objectURL);
+            items.splice(idx, 1);
+            renderModelList();
+            if (currentObject && item.active) {
+                clearCurrentObject();
+                showEmptyState();
+            }
+        }
+
+        function showEmptyState() {
+            emptyState.classList.remove('hidden');
+            canvas.style.display = 'none';
+            imagePreview.style.display = 'none';
+            controlsPanel.style.display = 'none';
+            modelInfo.textContent = 'لم يتم اختيار أي ملف بعد';
+        }
+
+        async function selectItem(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+
+            items.forEach(i => i.active = false);
+            item.active = true;
+            document.querySelectorAll('.model-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.model-item[data-id="${id}"]`)?.classList.add('active');
+
+            if (item.type === 'image') {
+                clearCurrentObject();
+                canvas.style.display = 'none';
+                imagePreview.style.display = 'flex';
+                emptyState.classList.add('hidden');
+                controlsPanel.style.display = 'none';
+                previewImg.src = item.objectURL;
+                modelInfo.innerHTML = `<strong>${item.name}</strong><br>الصيغة: ${item.format.toUpperCase()}<br>الحجم: ${humanFileSize(item.size)}`;
+                return;
+            }
+
+            // 3D model
+            imagePreview.style.display = 'none';
+            canvas.style.display = 'block';
+            emptyState.classList.add('hidden');
+            controlsPanel.style.display = 'block';
+
+            loading.classList.add('active');
+            loadingDetail.textContent = item.name;
+
+            try {
+                clearCurrentObject();
+                const object = await loadModel(item);
+                frameObject(object);
+                applyWireframe(object, wireframeOn);
+                scene.add(object);
+                currentObject = object;
+                modelInfo.innerHTML = `<strong>${item.name}</strong><br>الصيغة: ${item.format.toUpperCase()}<br>الحجم: ${humanFileSize(item.size)}<br>تم التحميل بنجاح ✅`;
+            } catch (err) {
+                console.error(err);
+                modelInfo.innerHTML = `<strong style="color:red">فشل تحميل الملف</strong><br>${err.message || err}`;
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        function loadModel(item) {
+            return new Promise((resolve, reject) => {
+                const url = item.objectURL;
+                switch (item.format) {
+                    case 'glb':
+                    case 'gltf': {
+                        const loader = new GLTFLoader();
+                        loader.load(url, gltf => resolve(gltf.scene), undefined, reject);
+                        break;
+                    }
+                    case 'obj': {
+                        const loader = new OBJLoader();
+                        loader.load(url, obj => resolve(obj), undefined, reject);
+                        break;
+                    }
+                    case 'stl': {
+                        const loader = new STLLoader();
+                        loader.load(url, geometry => {
+                            const material = new THREE.MeshStandardMaterial({ color: 0x667eea, metalness: 0.1, roughness: 0.6 });
+                            const mesh = new THREE.Mesh(geometry, material);
+                            resolve(mesh);
+                        }, undefined, reject);
+                        break;
+                    }
+                    case 'fbx': {
+                        const loader = new FBXLoader();
+                        loader.load(url, obj => resolve(obj), undefined, reject);
+                        break;
+                    }
+                    default:
+                        reject(new Error('صيغة غير مدعومة: ' + item.format));
+                }
+            });
+        }
+
+        function addFiles(fileList) {
+            const files = Array.from(fileList);
+            let firstNewId = null;
+
+            files.forEach(file => {
+                const ext = getExt(file.name);
+                let type = null;
+                if (MODEL_EXTS.includes(ext)) type = '3d';
+                else if (IMAGE_EXTS.includes(ext) || file.type.startsWith('image/')) type = 'image';
+
+                if (!type) {
+                    alert(`صيغة غير مدعومة: ${file.name}\nUnsupported format: .${ext}`);
+                    return;
+                }
+
+                const objectURL = URL.createObjectURL(file);
+                const id = 'item-' + (++itemCounter);
+                items.push({
+                    id, name: file.name, size: file.size,
+                    type, format: ext, objectURL
+                });
+                if (!firstNewId) firstNewId = id;
+            });
+
+            renderModelList();
+            if (firstNewId) selectItem(firstNewId);
+        }
+
+        // ---------- Upload Handlers ----------
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) addFiles(e.target.files);
+            fileInput.value = '';
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+        });
+
+        // Drag & drop anywhere on viewer
+        ['dragenter', 'dragover'].forEach(evt =>
+            viewerEl.addEventListener(evt, (e) => {
+                e.preventDefault();
+                dropHint.classList.add('active');
+            })
+        );
+        ['dragleave', 'drop'].forEach(evt =>
+            viewerEl.addEventListener(evt, (e) => {
+                e.preventDefault();
+                dropHint.classList.remove('active');
+            })
+        );
+        viewerEl.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+        });
+
+        // ---------- Controls ----------
+        document.getElementById('resetView').addEventListener('click', () => {
+            if (currentObject) frameObject(currentObject);
+            document.getElementById('scale').value = 1;
+            document.getElementById('rotationSpeed').value = 2;
+            rotationSpeed = 2;
+        });
+
+        document.getElementById('toggleRotation').addEventListener('click', (e) => {
+            isRotating = !isRotating;
+            e.target.textContent = isRotating ? '⏸️ إيقاف الدوران' : '▶️ بدء الدوران';
+        });
+
+        document.getElementById('toggleBackground').addEventListener('click', () => {
+            bgIndex = (bgIndex + 1) % backgrounds.length;
+            scene.background = new THREE.Color(backgrounds[bgIndex]);
+        });
+
+        document.getElementById('toggleWireframe').addEventListener('click', (e) => {
+            wireframeOn = !wireframeOn;
+            if (currentObject) applyWireframe(currentObject, wireframeOn);
+            e.target.textContent = wireframeOn ? '🔳 إخفاء الإطار الشبكي' : '🔲 عرض الإطار الشبكي';
+        });
+
+        document.getElementById('scale').addEventListener('input', (e) => {
+            if (currentObject) {
+                const factor = parseFloat(e.target.value);
+                currentObject.scale.setScalar(currentObject.userData.baseScale * factor || factor);
+            }
+        });
+
+        document.getElementById('rotationSpeed').addEventListener('input', (e) => {
+            rotationSpeed = parseFloat(e.target.value);
+        });
+
+        // Init
+        renderModelList();
+        showEmptyState();
+    </script>
+</body>
+</html>
